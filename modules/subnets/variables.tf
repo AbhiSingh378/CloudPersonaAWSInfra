@@ -4,12 +4,12 @@ variable "vpc_id" {
 }
 
 variable "public_subnet_cidrs" {
-  description = "CIDR blocks for the public subnets"
+  description = "CIDR blocks for public subnets"
   type        = list(string)
 }
 
 variable "private_subnet_cidrs" {
-  description = "CIDR blocks for the private subnets"
+  description = "CIDR blocks for private subnets"
   type        = list(string)
 }
 
