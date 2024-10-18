@@ -1,6 +1,6 @@
 provider "aws" {
   region  = var.aws_region
-  profile = "dev"
+  profile = var.aws_profile
 }
 
 module "vpc" {
@@ -27,8 +27,16 @@ module "internet_gateway" {
 module "route_tables" {
   source              = "./modules/route_tables"
   vpc_id              = module.vpc.vpc_id
-  project_name        = var.project_name
   internet_gateway_id = module.internet_gateway.internet_gateway_id
   public_subnet_ids   = module.subnets.public_subnet_ids
   private_subnet_ids  = module.subnets.private_subnet_ids
+  project_name        = var.project_name
+}
+
+module "ec2" {
+  source            = "./modules/ec2"
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.subnets.public_subnet_ids
+  ami_id            = var.ami_name
+  project_name      = var.project_name
 }

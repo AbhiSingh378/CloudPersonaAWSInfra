@@ -1,14 +1,19 @@
 output "vpc_id" {
-  value       = module.vpc.vpc_id
-  description = "The ID of the VPC"
+  value = module.vpc.vpc_id
 }
 
 output "public_subnet_ids" {
-  value       = module.subnets.public_subnet_ids
-  description = "List of IDs of public subnets"
+  value = module.subnets.public_subnet_ids
 }
 
 output "private_subnet_ids" {
-  value       = module.subnets.private_subnet_ids
-  description = "List of IDs of private subnets"
+  value = module.subnets.private_subnet_ids
+}
+
+output "internet_gateway_id" {
+  value = module.internet_gateway.internet_gateway_id
+}
+
+output "ec2_instance_id" {
+  value = module.ec2.instance_id
 }

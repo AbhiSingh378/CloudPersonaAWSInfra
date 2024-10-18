@@ -1,5 +1,5 @@
 variable "aws_region" {
-  description = "AWS region"
+  description = "AWS region to deploy resources"
   type        = string
 }
 
@@ -19,16 +19,21 @@ variable "vpc_cidr" {
 }
 
 variable "public_subnet_cidrs" {
-  description = "CIDR blocks for the public subnets"
+  description = "CIDR blocks for public subnets"
   type        = list(string)
 }
 
 variable "private_subnet_cidrs" {
-  description = "CIDR blocks for the private subnets"
+  description = "CIDR blocks for private subnets"
   type        = list(string)
 }
 
 variable "availability_zones" {
   description = "List of availability zones"
   type        = list(string)
+}
+
+variable "ami_name" {
+  description = "AMI ID for EC2 instances"
+  type        = string
 }
