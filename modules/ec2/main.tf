@@ -1,3 +1,4 @@
+# First create the security groups
 resource "aws_security_group" "app_sg" {
   name        = "${var.project_name}-app-sg"
   description = "Security group for web applications"
@@ -43,16 +44,35 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
+# Then create the EC2 instance
 resource "aws_instance" "app_server" {
-  ami                         = var.ami_id
-  instance_type               = "t2.micro"
-  subnet_id                   = var.public_subnet_ids[0]
-  vpc_security_group_ids      = [aws_security_group.app_sg.id]
-  associate_public_ip_address = true
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  subnet_id     = var.public_subnet_ids[0]
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
+
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    # Preserve existing variables
+    if [ -f /opt/csye6225/webapp/.env ]; then
+      cp /opt/csye6225/webapp/.env /opt/csye6225/webapp/.env.backup
+    fi
+    
+    # Add database configuration
+    echo "DB_NAME=${var.db_name}" >> /opt/csye6225/webapp/.env
+    echo "DB_USER=${var.db_username}" >> /opt/csye6225/webapp/.env
+    echo "DB_PASSWORD=${var.db_password}" >> /opt/csye6225/webapp/.env
+    echo "DB_HOST=${var.db_endpoint}" >> /opt/csye6225/webapp/.env
+    echo "SQLALCHEMY_DATABASE_URI=mysql+pymysql://${var.db_username}:${var.db_password}@${var.db_endpoint}/${var.db_name}" >> /opt/csye6225/webapp/.env
+    
+    # Restart the webapp service to apply changes
+    sudo systemctl restart webapp.service
+    EOF
+  )
 
   root_block_device {
     volume_size           = 25
-    volume_type           = "gp2"
+    volume_type          = "gp2"
     delete_on_termination = true
   }
 

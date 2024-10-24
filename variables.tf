@@ -37,3 +37,44 @@ variable "ami_name" {
   description = "AMI ID for EC2 instances"
   type        = string
 }
+
+variable "db_name" {
+  description = "Database name"
+  type        = string
+  default     = "csye6225"
+}
+
+variable "db_username" {
+  description = "Database master username"
+  type        = string
+  default     = "csye6225"
+}
+
+variable "db_password" {
+  description = "Database master password"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "db_engine" {
+  description = "Database engine"
+  type        = string
+  default     = "mysql"
+}
+
+variable "db_engine_version" {
+  description = "Database engine version"
+  type        = string
+  default     = "8.0.28"
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
