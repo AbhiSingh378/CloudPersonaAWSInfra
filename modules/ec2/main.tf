@@ -46,9 +46,9 @@ resource "aws_security_group" "app_sg" {
 
 # Then create the EC2 instance
 resource "aws_instance" "app_server" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
-  subnet_id     = var.public_subnet_ids[0]
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  subnet_id              = var.public_subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
   user_data = base64encode(<<-EOF
@@ -72,7 +72,7 @@ resource "aws_instance" "app_server" {
 
   root_block_device {
     volume_size           = 25
-    volume_type          = "gp2"
+    volume_type           = "gp2"
     delete_on_termination = true
   }
 
