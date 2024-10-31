@@ -78,3 +78,18 @@ variable "instance_type" {
   description = "EC2 instance type"
   type        = string
 }
+
+variable "environment" {
+  description = "Environment (dev/demo)"
+  type        = string
+}
+
+variable "domain_name" {
+  description = "Domain name"
+  type        = string
+}
+
+variable "route53_zone_id" {
+  description = "Route53 hosted zone ID"
+  type        = string
+}
