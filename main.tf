@@ -56,12 +56,29 @@ module "ec2" {
   ami_id            = var.ami_name
   project_name      = var.project_name
   instance_type     = var.instance_type
+  iam_instance_profile = module.iam.instance_profile_name
+  route53_zone_id      = var.route53_zone_id
+  s3_bucket_name       = module.s3.bucket_name
+  aws_region           = var.aws_region
+  domain_name          = var.domain_name
+  environment          = var.environment
 
   # Add these database-related variables
   db_endpoint = module.rds.db_instance_endpoint
   db_username = var.db_username
   db_password = var.db_password
   db_name     = var.db_name
+}
+
+module "s3" {
+  source       = "./modules/s3"
+  project_name = var.project_name
+}
+
+module "iam" {
+  source       = "./modules/iam"
+  project_name = var.project_name
+  bucket_arn   = module.s3.bucket_arn
 }
 
 

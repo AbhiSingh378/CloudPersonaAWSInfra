@@ -42,3 +42,33 @@ variable "instance_type" {
   description = "EC2 instance type"
   type        = string
 }
+
+variable "iam_instance_profile" {
+  description = "IAM instance profile name"
+  type        = string
+}
+
+variable "route53_zone_id" {
+  description = "Route53 hosted zone ID"
+  type        = string
+}
+
+variable "domain_name" {
+  description = "Domain name"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment (dev/demo)"
+  type        = string
+}
+
+variable "s3_bucket_name" {
+  description = "The name of the S3 bucket "
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+}
