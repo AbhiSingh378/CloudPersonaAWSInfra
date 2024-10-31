@@ -50,12 +50,12 @@ module "rds" {
 
 # Then create EC2 module with RDS information
 module "ec2" {
-  source            = "./modules/ec2"
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.subnets.public_subnet_ids
-  ami_id            = var.ami_name
-  project_name      = var.project_name
-  instance_type     = var.instance_type
+  source               = "./modules/ec2"
+  vpc_id               = module.vpc.vpc_id
+  public_subnet_ids    = module.subnets.public_subnet_ids
+  ami_id               = var.ami_name
+  project_name         = var.project_name
+  instance_type        = var.instance_type
   iam_instance_profile = module.iam.instance_profile_name
   route53_zone_id      = var.route53_zone_id
   s3_bucket_name       = module.s3.bucket_name

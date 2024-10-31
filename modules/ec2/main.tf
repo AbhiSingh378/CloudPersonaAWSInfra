@@ -47,8 +47,8 @@ resource "aws_security_group" "app_sg" {
 # Then create the EC2 instance
 resource "aws_instance" "app_server" {
   ami                    = var.ami_id
-  instance_type         = var.instance_type
-  subnet_id             = var.public_subnet_ids[0]
+  instance_type          = var.instance_type
+  subnet_id              = var.public_subnet_ids[0]
   iam_instance_profile   = var.iam_instance_profile
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 

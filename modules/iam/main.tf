@@ -64,7 +64,7 @@ resource "aws_iam_policy" "s3_policy" {
           "s3:PutObject"
         ],
         Resource = [
-          "${var.bucket_arn}/*" 
+          "${var.bucket_arn}/*"
         ]
       },
     ]
