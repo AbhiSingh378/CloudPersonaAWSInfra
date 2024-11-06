@@ -129,7 +129,7 @@ resource "aws_lb" "app_lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets           = var.public_subnet_ids
+  subnets            = var.public_subnet_ids
 
   tags = {
     Name = "${var.project_name}-alb"
@@ -170,12 +170,12 @@ resource "aws_lb_listener" "front_end" {
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app_asg" {
   name                      = "${var.project_name}-asg"
-  desired_capacity         = 1
-  max_size                = 3
-  min_size                = 1
-  target_group_arns       = [aws_lb_target_group.app_tg.arn]
-  vpc_zone_identifier     = var.public_subnet_ids
-  health_check_type       = "ELB"
+  desired_capacity          = 1
+  max_size                  = 3
+  min_size                  = 1
+  target_group_arns         = [aws_lb_target_group.app_tg.arn]
+  vpc_zone_identifier       = var.public_subnet_ids
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   launch_template {
@@ -195,7 +195,7 @@ resource "aws_autoscaling_policy" "scale_up" {
   name                   = "${var.project_name}-cpu-scale-up-step"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = 60
+  cooldown               = 60
   autoscaling_group_name = aws_autoscaling_group.app_asg.name
 }
 
@@ -223,7 +223,7 @@ resource "aws_autoscaling_policy" "scale_down" {
   name                   = "${var.project_name}-cpu-scale-down-step"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = 60
+  cooldown               = 60
   autoscaling_group_name = aws_autoscaling_group.app_asg.name
 }
 
