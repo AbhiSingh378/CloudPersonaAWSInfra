@@ -3,6 +3,11 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "vpc_cidr" {
+  description = "CIDR block of the VPC"
+  type        = string
+}
+
 variable "public_subnet_ids" {
   description = "IDs of public subnets"
   type        = list(string)
@@ -64,7 +69,7 @@ variable "environment" {
 }
 
 variable "s3_bucket_name" {
-  description = "The name of the S3 bucket "
+  description = "The name of the S3 bucket"
   type        = string
 }
 
