@@ -64,9 +64,9 @@ resource "aws_security_group" "app_sg" {
 
 # Launch Template
 resource "aws_launch_template" "app_template" {
-  name                = "csye6225_asg"
-  image_id            = var.ami_id
-  instance_type       = "t2.micro"
+  name          = "csye6225_asg"
+  image_id      = var.ami_id
+  instance_type = "t2.micro"
 
   network_interfaces {
     associate_public_ip_address = true
@@ -171,11 +171,11 @@ resource "aws_lb_listener" "front_end" {
 resource "aws_autoscaling_group" "app_asg" {
   name                      = "${var.project_name}-asg"
   desired_capacity         = 1
-  max_size                 = 3
-  min_size                 = 1
-  target_group_arns        = [aws_lb_target_group.app_tg.arn]
-  vpc_zone_identifier      = var.public_subnet_ids
-  health_check_type        = "ELB"
+  max_size                = 3
+  min_size                = 1
+  target_group_arns       = [aws_lb_target_group.app_tg.arn]
+  vpc_zone_identifier     = var.public_subnet_ids
+  health_check_type       = "ELB"
   health_check_grace_period = 300
 
   launch_template {
@@ -190,26 +190,25 @@ resource "aws_autoscaling_group" "app_asg" {
   }
 }
 
-### Updated Autoscaling Policies to Use Step Scaling
+# Scale Up Policy
 resource "aws_autoscaling_policy" "scale_up" {
   name                   = "${var.project_name}-cpu-scale-up-step"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 60
+  cooldown              = 60
   autoscaling_group_name = aws_autoscaling_group.app_asg.name
 }
 
-
-### Scale-up Alarm
+# Scale Up Alarm
 resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   alarm_name          = "${var.project_name}-cpu-scale-up-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = 60               # 2-minute period
+  period              = 60
   statistic           = "Average"
-  threshold           = 9                 # Scale up when CPU utilization >= 9%
+  threshold           = 9
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.app_asg.name
@@ -219,23 +218,23 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   alarm_actions     = [aws_autoscaling_policy.scale_up.arn]
 }
 
-
+# Scale Down Policy
 resource "aws_autoscaling_policy" "scale_down" {
   name                   = "${var.project_name}-cpu-scale-down-step"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 60
+  cooldown              = 60
   autoscaling_group_name = aws_autoscaling_group.app_asg.name
 }
 
-### Scale-down Alarm
+# Scale Down Alarm
 resource "aws_cloudwatch_metric_alarm" "scale_down_alarm" {
   alarm_name          = "${var.project_name}-cpu-scale-down-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = 60               # 2-minute period
+  period              = 60
   statistic           = "Average"
   threshold           = 7.5
 
@@ -246,7 +245,6 @@ resource "aws_cloudwatch_metric_alarm" "scale_down_alarm" {
   alarm_description = "This metric monitors EC2 CPU utilization for scale-in"
   alarm_actions     = [aws_autoscaling_policy.scale_down.arn]
 }
-
 
 # Route53 Record
 resource "aws_route53_record" "app_record" {
