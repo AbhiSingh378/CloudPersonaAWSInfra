@@ -52,6 +52,7 @@ module "rds" {
 module "ec2" {
   source               = "./modules/ec2"
   vpc_id               = module.vpc.vpc_id
+  vpc_cidr             = var.vpc_cidr
   public_subnet_ids    = module.subnets.public_subnet_ids
   ami_id               = var.ami_name
   project_name         = var.project_name
@@ -62,12 +63,10 @@ module "ec2" {
   aws_region           = var.aws_region
   domain_name          = var.domain_name
   environment          = var.environment
-
-  # Add these database-related variables
-  db_endpoint = module.rds.db_instance_endpoint
-  db_username = var.db_username
-  db_password = var.db_password
-  db_name     = var.db_name
+  db_endpoint          = module.rds.db_instance_endpoint
+  db_username          = var.db_username
+  db_password          = var.db_password
+  db_name              = var.db_name
 }
 
 module "s3" {
