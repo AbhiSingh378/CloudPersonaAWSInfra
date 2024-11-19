@@ -93,3 +93,28 @@ variable "route53_zone_id" {
   description = "Route53 hosted zone ID"
   type        = string
 }
+
+# In root variables.tf
+
+variable "sendgrid_api_key" {
+  description = "SendGrid API Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "lambda_function_path" {
+  description = "Path to the Lambda function zip file"
+  type        = string
+  default     = "serverless/email_verification/email_verification.zip"
+}
+
+# Add to root variables.tf
+variable "sender_email" {
+  description = "Sender email address for SendGrid"
+  type        = string
+}
+
+variable "key_name" {
+  description = "ARN of the SNS topic"
+  type        = string
+}

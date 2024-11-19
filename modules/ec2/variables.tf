@@ -77,3 +77,14 @@ variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
 }
+
+# In modules/ec2/variables.tf
+variable "sns_topic_arn" {
+  description = "ARN of the SNS topic"
+  type        = string
+}
+
+variable "key_name" {
+  description = "ARN of the SNS topic"
+  type        = string
+}
