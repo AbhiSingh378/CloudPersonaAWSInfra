@@ -17,6 +17,22 @@ resource "aws_security_group" "alb_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
+  ingress {
+    description = "Allow HTTP from anywhere (IPv6)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
+    description = "Allow HTTPS from anywhere (IPv6)"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    ipv6_cidr_blocks = ["::/0"]
+  }
 
   egress {
     from_port   = 0
@@ -40,7 +56,7 @@ resource "aws_security_group" "app_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -48,6 +64,7 @@ resource "aws_security_group" "app_sg" {
     to_port         = 5000
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
+
   }
 
   egress {
@@ -67,6 +84,7 @@ resource "aws_launch_template" "app_template" {
   name          = "csye6225_asg"
   image_id      = var.ami_id
   instance_type = "t2.micro"
+  key_name      = var.key_name
 
   network_interfaces {
     associate_public_ip_address = true
@@ -79,8 +97,6 @@ resource "aws_launch_template" "app_template" {
 
   user_data = base64encode(<<-EOF
     #!/bin/bash
-    set -e
-
     if [ -f /opt/csye6225/webapp/.env ]; then
       cp /opt/csye6225/webapp/.env /opt/csye6225/webapp/.env.backup
     fi
@@ -96,6 +112,8 @@ resource "aws_launch_template" "app_template" {
     SQLALCHEMY_DATABASE_URI=mysql+pymysql://${var.db_username}:${var.db_password}@${var.db_endpoint}/${var.db_name}
     AWS_BUCKET_NAME=${var.s3_bucket_name}
     AWS_REGION=${var.aws_region}
+    SNS_TOPIC_ARN=${var.sns_topic_arn}
+
     EOT
 
     mkdir -p /opt/csye6225/webapp/logs
@@ -170,13 +188,11 @@ resource "aws_lb_listener" "front_end" {
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app_asg" {
   name                      = "${var.project_name}-asg"
-  desired_capacity          = 1
-  max_size                  = 3
-  min_size                  = 1
+  desired_capacity          = 3
+  max_size                  = 5
+  min_size                  = 3
   target_group_arns         = [aws_lb_target_group.app_tg.arn]
   vpc_zone_identifier       = var.public_subnet_ids
-  health_check_type         = "ELB"
-  health_check_grace_period = 300
 
   launch_template {
     id      = aws_launch_template.app_template.id

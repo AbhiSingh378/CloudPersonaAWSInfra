@@ -57,6 +57,7 @@ module "ec2" {
   ami_id               = var.ami_name
   project_name         = var.project_name
   instance_type        = var.instance_type
+  sns_topic_arn        = module.sns_lambda.sns_topic_arn
   iam_instance_profile = module.iam.instance_profile_name
   route53_zone_id      = var.route53_zone_id
   s3_bucket_name       = module.s3.bucket_name
@@ -67,6 +68,7 @@ module "ec2" {
   db_username          = var.db_username
   db_password          = var.db_password
   db_name              = var.db_name
+  key_name             = var.key_name
 }
 
 module "s3" {
@@ -80,4 +82,34 @@ module "iam" {
   bucket_arn   = module.s3.bucket_arn
 }
 
+module "sns_lambda" {
+  source = "./modules/sns_lambda"
 
+  environment         = var.environment
+  project_name        = var.project_name
+  aws_region         = var.aws_region
+  
+  lambda_function_path = "C:/Users/aviga/assign1/serverless/email_verification/lambda_function.zip"
+  lambda_handler      = "email_verification.handler"
+  lambda_runtime      = "python3.9"
+  
+  db_host            = module.rds.db_instance_endpoint
+  db_name            = var.db_name
+  db_username        = var.db_username
+  db_password        = var.db_password
+  domain_name        = var.domain_name 
+  
+  verification_url   = "https://${var.domain_name}/verify"
+  sender_email       = var.sender_email
+  sendgrid_api_key   = var.sendgrid_api_key
+  
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids         = module.subnets.private_subnet_ids
+  rds_arn            = module.rds.db_instance_arn
+  ec2_role_arn       = module.iam.ec2_role_arn
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}

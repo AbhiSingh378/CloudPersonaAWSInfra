@@ -12,3 +12,9 @@ output "db_security_group_id" {
   description = "The ID of the database security group"
   value       = aws_security_group.db_sg.id
 }
+
+# In modules/rds/outputs.tf
+output "db_instance_arn" {
+  description = "The ARN of the RDS instance"
+  value       = aws_db_instance.db_instance.arn
+}
