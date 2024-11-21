@@ -113,6 +113,7 @@ resource "aws_launch_template" "app_template" {
     AWS_BUCKET_NAME=${var.s3_bucket_name}
     AWS_REGION=${var.aws_region}
     SNS_TOPIC_ARN=${var.sns_topic_arn}
+    SECRET_TOKEN=${var.SECRET_TOKEN}
 
     EOT
 
