@@ -88,3 +88,9 @@ variable "key_name" {
   description = "ARN of the SNS topic"
   type        = string
 }
+
+variable "SECRET_TOKEN" {
+  description = "Secret token for application authentication"
+  type        = string
+  default     = "d2e26e8a1706c4c4509c4b5757efa58aac898cccf01a8030"
+}

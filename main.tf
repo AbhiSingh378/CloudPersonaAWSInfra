@@ -69,6 +69,7 @@ module "ec2" {
   db_password          = var.db_password
   db_name              = var.db_name
   key_name             = var.key_name
+  SECRET_TOKEN         = var.SECRET_TOKEN
 }
 
 module "s3" {
@@ -89,17 +90,18 @@ module "sns_lambda" {
   project_name        = var.project_name
   aws_region         = var.aws_region
   
-  lambda_function_path = "C:/Users/aviga/assign1/serverless/email_verification/lambda_function.zip"
-  lambda_handler      = "email_verification.handler"
+  lambda_function_path = "C:/Users/aviga/assign1/serverless/lambda_verify_user/lambda_function.zip"
+  lambda_handler      = "lambda_function.lambda_handler"
   lambda_runtime      = "python3.9"
   
   db_host            = module.rds.db_instance_endpoint
   db_name            = var.db_name
   db_username        = var.db_username
   db_password        = var.db_password
-  domain_name        = var.domain_name 
+  domain_name        = var.domain_name
+  SECRET_TOKEN       = var.SECRET_TOKEN
   
-  verification_url   = "https://${var.domain_name}/verify"
+  verification_url   = "https://${var.domain_name}/v1/user"
   sender_email       = var.sender_email
   sendgrid_api_key   = var.sendgrid_api_key
   

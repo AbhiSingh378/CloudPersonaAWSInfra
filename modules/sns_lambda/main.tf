@@ -14,22 +14,17 @@ resource "aws_lambda_function" "email_verification" {
   filename         = var.lambda_function_path
   function_name    = "${var.environment}-${var.project_name}-email-verification"
   role            = aws_iam_role.lambda_role.arn
-  handler         = var.lambda_handler
+  handler         = "lambda_function.lambda_handler"
   runtime         = var.lambda_runtime
   timeout         = var.lambda_timeout
   memory_size     = var.lambda_memory_size
 
   environment {
     variables = {
-      DB_HOST          = var.db_host
-      DB_NAME          = var.db_name
-      DB_USER          = var.db_username
-      DB_PASSWORD      = var.db_password
       SENDGRID_API_KEY = var.sendgrid_api_key
       DOMAIN_NAME      = var.domain_name
       FROM_EMAIL       = var.sender_email
-      REGION          = var.aws_region
-      DB_CONNECTION_STRING = "mysql+pymysql://${var.db_username}:${var.db_password}@${var.db_host}/${var.db_name}"
+      SECRET_TOKEN     = var.SECRET_TOKEN
     }
   }
 
