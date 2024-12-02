@@ -48,6 +48,10 @@ resource "aws_db_instance" "db_instance" {
   parameter_group_name   = aws_db_parameter_group.db_parameter_group.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
 
+  # New KMS encryption configuration
+  storage_encrypted = true
+  kms_key_id       = var.rds_kms_key_arn
+
   multi_az            = false
   publicly_accessible = false
   skip_final_snapshot = true

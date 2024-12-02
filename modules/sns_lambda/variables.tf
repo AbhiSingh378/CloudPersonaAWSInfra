@@ -119,3 +119,13 @@ variable "SECRET_TOKEN" {
   type        = string
   default     = "d2e26e8a1706c4c4509c4b5757efa58aac898cccf01a8030"
 }
+
+variable "email_secrets_arn" {
+  description = "ARN of the email service secrets in Secrets Manager"
+  type        = string
+}
+
+variable "secrets_kms_key_arn" {
+  description = "ARN of KMS key used for Secrets Manager encryption"
+  type        = string
+}
