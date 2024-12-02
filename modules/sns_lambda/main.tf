@@ -1,5 +1,3 @@
-# modules/sns_lambda/main.tf
-
 # SNS Topic
 resource "aws_sns_topic" "user_verification" {
   name = "${var.environment}-${var.project_name}-user-verification"
@@ -21,10 +19,9 @@ resource "aws_lambda_function" "email_verification" {
 
   environment {
     variables = {
-      SENDGRID_API_KEY = var.sendgrid_api_key
       DOMAIN_NAME      = var.domain_name
-      FROM_EMAIL       = var.sender_email
-      SECRET_TOKEN     = var.SECRET_TOKEN
+      SECRETS_ARN      = var.email_secrets_arn
+      
     }
   }
 
@@ -105,6 +102,36 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "rds:*"
         ]
         Resource = var.rds_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = var.email_secrets_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = var.secrets_kms_key_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = var.email_secrets_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ]
+        Resource = var.secrets_kms_key_arn
       }
     ]
   })

@@ -47,3 +47,8 @@ variable "db_engine_version" {
   description = "Database engine version"
   type        = string
 }
+
+variable "rds_kms_key_arn" {
+  description = "ARN of KMS key for RDS encryption"
+  type        = string
+}

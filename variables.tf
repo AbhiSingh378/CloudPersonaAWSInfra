@@ -124,3 +124,19 @@ variable "SECRET_TOKEN" {
   type        = string
   default     = "d2e26e8a1706c4c4509c4b5757efa58aac898cccf01a8030"
 }
+
+variable "tags" {
+  description = "Tags to be applied to resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "counter" {
+  description = "Current counter"
+  type        = number
+}
+
+variable "certificate_arn"{
+  description = "SSL certificate arn"
+  type        = string
+}

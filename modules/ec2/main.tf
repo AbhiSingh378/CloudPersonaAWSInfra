@@ -4,12 +4,12 @@ resource "aws_security_group" "alb_sg" {
   description = "Security group for Application Load Balancer"
   vpc_id      = var.vpc_id
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#  ingress {
+#    from_port   = 80
+#    to_port     = 80
+#    protocol    = "tcp"
+#    cidr_blocks = ["0.0.0.0/0"]
+#  }
 
   ingress {
     from_port   = 443
@@ -18,13 +18,13 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   
-  ingress {
-    description = "Allow HTTP from anywhere (IPv6)"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    ipv6_cidr_blocks = ["::/0"]
-  }
+#  ingress {
+#    description = "Allow HTTP from anywhere (IPv6)"
+#    from_port   = 80
+#    to_port     = 80
+#    protocol    = "tcp"
+#    ipv6_cidr_blocks = ["::/0"]
+#  }
 
   ingress {
     description = "Allow HTTPS from anywhere (IPv6)"
@@ -86,6 +86,15 @@ resource "aws_launch_template" "app_template" {
   instance_type = "t2.micro"
   key_name      = var.key_name
 
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      encrypted   = true
+      kms_key_id  = var.ec2_kms_key_arn
+      volume_size = 8
+    }
+  }
+
   network_interfaces {
     associate_public_ip_address = true
     security_groups             = [aws_security_group.app_sg.id]
@@ -97,25 +106,93 @@ resource "aws_launch_template" "app_template" {
 
   user_data = base64encode(<<-EOF
     #!/bin/bash
+
+    # Update and install AWS CLI and jq
+    apt-get update && apt-get install -y awscli jq
+
+    # Function to check AWS credentials
+    check_aws_credentials() {
+      for i in {1..150}; do
+        if aws sts get-caller-identity >/dev/null 2>&1; then
+          echo "AWS credentials available"
+          return 0
+        fi
+        echo "Waiting for AWS credentials... attempt $i"
+        sleep 10
+      done
+      return 1
+    }
+
+    # Function to fetch secrets
+    fetch_secrets() {
+      for i in {1..60}; do
+        echo "Attempting to fetch secrets... attempt $i"
+        
+        # Fetch database credentials
+        DB_SECRETS=$(aws secretsmanager get-secret-value --secret-id ${var.db_secret_arn} --region ${var.aws_region} --query SecretString --output text)
+        if [ $? -eq 0 ]; then
+          DB_USERNAME=$(echo $DB_SECRETS | jq -r .username)
+          DB_PASSWORD=$(echo $DB_SECRETS | jq -r .password)
+          DB_HOST_FULL=$(echo $DB_SECRETS | jq -r .host)
+          DB_HOST=$(echo $DB_HOST_FULL | cut -d':' -f1)
+          
+          # Fetch email service credentials
+          EMAIL_SECRETS=$(aws secretsmanager get-secret-value --secret-id ${var.email_secret_arn} --region ${var.aws_region} --query SecretString --output text)
+          if [ $? -eq 0 ]; then
+            # Verify we got valid values
+            if [ "$DB_HOST" != "null" ] && [ "$DB_HOST" != "" ] && [ "$DB_HOST" != "localhost" ]; then
+              echo "Successfully retrieved DB credentials with host: $DB_HOST"
+              return 0
+            else
+              echo "Invalid DB_HOST value: $DB_HOST"
+            fi
+          fi
+        fi
+        
+        sleep 10
+      done
+      return 1
+    }
+
+    # Wait for AWS credentials
+    if ! check_aws_credentials; then
+      echo "Failed to obtain AWS credentials"
+      exit 1
+    fi
+
+    # Fetch secrets with retry
+    if ! fetch_secrets; then
+      echo "Failed to fetch secrets"
+      exit 1
+    fi
+
+
     if [ -f /opt/csye6225/webapp/.env ]; then
       cp /opt/csye6225/webapp/.env /opt/csye6225/webapp/.env.backup
     fi
     
-    cat <<EOT > /opt/csye6225/webapp/.env
+
+    # Create .env file only if we have all required variables
+    if [ -n "$DB_USERNAME" ] && [ -n "$DB_PASSWORD" ] && [ -n "$DB_HOST" ]; then
+      cat <<EOT > /opt/csye6225/webapp/.env
     FLASK_APP=webapp.py
     FLASK_ENV=development
     HOSTNAME=0.0.0.0
     DB_NAME=${var.db_name}
-    DB_USER=${var.db_username}
-    DB_PASSWORD=${var.db_password}
-    DB_HOST=${var.db_endpoint}
-    SQLALCHEMY_DATABASE_URI=mysql+pymysql://${var.db_username}:${var.db_password}@${var.db_endpoint}/${var.db_name}
+    DB_USER=$DB_USERNAME
+    DB_PASSWORD=$DB_PASSWORD
+    DB_HOST=$DB_HOST
+    SQLALCHEMY_DATABASE_URI=mysql+pymysql://$DB_USERNAME:$DB_PASSWORD@$DB_HOST/${var.db_name}
     AWS_BUCKET_NAME=${var.s3_bucket_name}
     AWS_REGION=${var.aws_region}
     SNS_TOPIC_ARN=${var.sns_topic_arn}
-    SECRET_TOKEN=${var.SECRET_TOKEN}
-
+    $(echo $EMAIL_SECRETS | jq -r 'to_entries | .[] | .key + "=" + .value')
     EOT
+    else
+      echo "Missing required credentials"
+      exit 1
+    fi
+
 
     mkdir -p /opt/csye6225/webapp/logs
     sudo touch /opt/csye6225/webapp/logs/webapp.log
@@ -170,20 +247,40 @@ resource "aws_lb_target_group" "app_tg" {
     timeout             = 5
     path                = "/healthz"
     port                = "5000"
-    unhealthy_threshold = 2
+    unhealthy_threshold = 5
   }
 }
 
 # ALB Listener
 resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.app_lb.arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = "443"
+  protocol          = "HTTPS"
+
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.certificate_arn
+  
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app_tg.arn
   }
+}
+
+resource "aws_lb_listener" "app_http_listener" {
+  load_balancer_arn = aws_lb.app_lb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      protocol    = "HTTPS"
+      port        = "443"
+      status_code = "HTTP_301"
+      }
+    }
 }
 
 # Auto Scaling Group
@@ -192,6 +289,7 @@ resource "aws_autoscaling_group" "app_asg" {
   desired_capacity          = 3
   max_size                  = 5
   min_size                  = 3
+  wait_for_capacity_timeout = "0"
   target_group_arns         = [aws_lb_target_group.app_tg.arn]
   vpc_zone_identifier       = var.public_subnet_ids
 

@@ -94,3 +94,23 @@ variable "SECRET_TOKEN" {
   type        = string
   default     = "d2e26e8a1706c4c4509c4b5757efa58aac898cccf01a8030"
 }
+
+variable "ec2_kms_key_arn" {
+  description = "ARN of KMS key for EC2 EBS encryption"
+  type        = string
+}
+
+variable "db_secret_arn" {
+  description = "ARN of the database credentials secret"
+  type        = string
+}
+
+variable "email_secret_arn" {
+  description = "ARN of the email service credentials secret"
+  type        = string
+}
+
+variable "certificate_arn"{
+  description = "SSL certificate arn"
+  type        = string
+}

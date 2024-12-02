@@ -46,6 +46,7 @@ module "rds" {
   db_instance_class     = var.db_instance_class
   db_engine             = var.db_engine
   db_engine_version     = var.db_engine_version
+  rds_kms_key_arn = module.kms.rds_key_arn
 }
 
 # Then create EC2 module with RDS information
@@ -56,9 +57,12 @@ module "ec2" {
   public_subnet_ids    = module.subnets.public_subnet_ids
   ami_id               = var.ami_name
   project_name         = var.project_name
+  ec2_kms_key_arn      = module.kms.ec2_key_arn
+  db_secret_arn        = module.secrets.rds_secret_arn
   instance_type        = var.instance_type
   sns_topic_arn        = module.sns_lambda.sns_topic_arn
   iam_instance_profile = module.iam.instance_profile_name
+  certificate_arn      = var.certificate_arn
   route53_zone_id      = var.route53_zone_id
   s3_bucket_name       = module.s3.bucket_name
   aws_region           = var.aws_region
@@ -70,17 +74,25 @@ module "ec2" {
   db_name              = var.db_name
   key_name             = var.key_name
   SECRET_TOKEN         = var.SECRET_TOKEN
+  email_secret_arn     = module.secrets.email_secret_arn
 }
 
 module "s3" {
   source       = "./modules/s3"
   project_name = var.project_name
+  s3_kms_key_arn = module.kms.s3_key_arn
 }
 
 module "iam" {
   source       = "./modules/iam"
   project_name = var.project_name
   bucket_arn   = module.s3.bucket_arn
+  db_credentials_secret_arn          = module.secrets.rds_secret_arn
+  lambda_email_credentials_secret_arn = module.secrets.email_secret_arn
+  ec2_key_arn                        = module.kms.ec2_key_arn
+  rds_key_arn                        = module.kms.rds_key_arn
+  s3_key_arn                         = module.kms.s3_key_arn
+  secrets_manager_key_arn            = module.kms.secrets_key_arn
 }
 
 module "sns_lambda" {
@@ -101,7 +113,7 @@ module "sns_lambda" {
   domain_name        = var.domain_name
   SECRET_TOKEN       = var.SECRET_TOKEN
   
-  verification_url   = "https://${var.domain_name}/v1/user"
+  verification_url   = "https://${var.environment}.${var.domain_name}/v1/user/verify"
   sender_email       = var.sender_email
   sendgrid_api_key   = var.sendgrid_api_key
   
@@ -110,8 +122,31 @@ module "sns_lambda" {
   rds_arn            = module.rds.db_instance_arn
   ec2_role_arn       = module.iam.ec2_role_arn
 
+  email_secrets_arn = module.secrets.email_secret_arn
+  secrets_kms_key_arn = module.kms.secrets_key_arn
+
   tags = {
     Environment = var.environment
     Project     = var.project_name
   }
+}
+
+module "kms" {
+  source = "./modules/kms"
+  tags   = var.tags
+  counter = var.counter
+}
+
+module "secrets" {
+  source           = "./modules/secrets"
+  environment      = var.environment
+  kms_key_arn      = module.kms.secrets_key_arn
+  counter          = var.counter
+  db_username      = var.db_username
+  db_password      = var.db_password
+  db_host          = module.rds.db_instance_endpoint
+  sender_email     = var.sender_email
+  sendgrid_api_key = var.sendgrid_api_key
+  SECRET_TOKEN       = var.SECRET_TOKEN
+  verification_url = "https://${var.environment}.nullisnotzero.me/v1/user/verify"
 }
